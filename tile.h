@@ -4,14 +4,14 @@
 #include <mutex>
 #include <vector>
 #include <atomic>
-#include <stdint.h>
+#include <cstdint>
 
 #include <QImage>
 
 class Tile {
 public:
     std::atomic<QImage *> rendered;
-    std::atomic_bool running = false;
+    std::atomic<bool> running = false;
 
     enum class updateStatus{
         UPDATED,

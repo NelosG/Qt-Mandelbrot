@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow),
           threads(std::thread::hardware_concurrency() == 1 ? 1
                                                            : std::thread::hardware_concurrency() - 1) {
-//          threads(11) {
+//          threads(2) {
     ui->setupUi(this);
 
     for (auto &a : threads) {
@@ -19,9 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
     while (size < tmp) {
         size *= 2;
     }
-    //magic with center setting
-//    coordSystem.zero = {2. / threads.size() - 1,
-//                        2. / threads.size() - 0.007 * threads.size()};
     some_tile.tile = new Tile();
     this->update();
 }
@@ -141,7 +138,7 @@ void MainWindow::paintEvent(QPaintEvent *ev) {
                     auto prior = tile->getPrior();
                     priority_Tile now = {prior, tile};
                     {
-                        auto guard = std::lock_guard(mut);
+                        std::lock_guard guard(mut);
                         tasks.push(now);
                     }
                     tile->running.store(true);
@@ -163,11 +160,12 @@ void MainWindow::paintEvent(QPaintEvent *ev) {
 
 void MainWindow::threadData::threadFunc() const {
     Tile::updateStatus status = Tile::updateStatus::COMPLETED;
-    Tile *tile;
+    Tile *tile = nullptr;
     while (running) {
         {
             auto lck = std::unique_lock(m_W->mut);
-            if (status == Tile::updateStatus::UPDATED || status == Tile::updateStatus::PAUSED) {
+            if (tile != nullptr && (status == Tile::updateStatus::UPDATED ||
+                status == Tile::updateStatus::PAUSED)) {
                 tile->running.store(true);
                 m_W->tasks.push({tile->getPrior(), tile});
             } else {
@@ -212,8 +210,8 @@ void MainWindow::wheelEvent(QWheelEvent *ev) {
     if(ev->angleDelta().ry() > 0){
         a= -a;
     }
-    coordSystem.xc += a*((int) ev->position().x() - width()/2)*0.2;
-    coordSystem.yc += a*((int) ev->position().y() - height()/2)*0.2;
+    coordSystem.xc += a*((int) ev->position().x() - width()/2.)*0.2;
+    coordSystem.yc += a*((int) ev->position().y() - height()/2.)*0.2;
 
     coordSystem.zero -= prevScale * Complex(coordSystem.xc, coordSystem.yc);
     coordSystem.xc = coordSystem.yc = 0;
@@ -234,8 +232,8 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *ev) {
 void MainWindow::mousePressEvent(QMouseEvent *ev) {
     if (ev->button() == Qt::LeftButton) {
         mouse_Storage.pressed = true;
-        mouse_Storage.lastX = ev->screenPos().x();
-        mouse_Storage.lastY = ev->screenPos().y();
+        mouse_Storage.lastX = ev->globalPosition().x();
+        mouse_Storage.lastY = ev->globalPosition().y();
         ev->accept();
     } else {
         ev->ignore();
@@ -249,10 +247,11 @@ void MainWindow::mouseMoveEvent(QMouseEvent *ev) {
         return;
     }
 
-    coordSystem.xc += ((int) ev->screenPos().x() - mouse_Storage.lastX);
-    coordSystem.yc += ((int) ev->screenPos().y() - mouse_Storage.lastY);
-    mouse_Storage.lastX = ev->screenPos().x();
-    mouse_Storage.lastY = ev->screenPos().y();
+
+    coordSystem.xc += ((int) ev->globalPosition().x() - mouse_Storage.lastX);
+    coordSystem.yc += ((int) ev->globalPosition().y() - mouse_Storage.lastY);
+    mouse_Storage.lastX = ev->globalPosition().x();
+    mouse_Storage.lastY = ev->globalPosition().y();
     update();
     ev->accept();
 }
