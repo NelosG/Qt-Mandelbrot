@@ -232,8 +232,8 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *ev) {
 void MainWindow::mousePressEvent(QMouseEvent *ev) {
     if (ev->button() == Qt::LeftButton) {
         mouse_Storage.pressed = true;
-        mouse_Storage.lastX = ev->globalPosition().x();
-        mouse_Storage.lastY = ev->globalPosition().y();
+        mouse_Storage.lastX = ev->screenPos().x();
+        mouse_Storage.lastY = ev->screenPos().y();
         ev->accept();
     } else {
         ev->ignore();
@@ -248,10 +248,10 @@ void MainWindow::mouseMoveEvent(QMouseEvent *ev) {
     }
 
 
-    coordSystem.xc += ((int) ev->globalPosition().x() - mouse_Storage.lastX);
-    coordSystem.yc += ((int) ev->globalPosition().y() - mouse_Storage.lastY);
-    mouse_Storage.lastX = ev->globalPosition().x();
-    mouse_Storage.lastY = ev->globalPosition().y();
+    coordSystem.xc += ((int) ev->screenPos().x() - mouse_Storage.lastX);
+    coordSystem.yc += ((int) ev->screenPos().y() - mouse_Storage.lastY);
+    mouse_Storage.lastX = ev->screenPos().x();
+    mouse_Storage.lastY = ev->screenPos().y();
     update();
     ev->accept();
 }
