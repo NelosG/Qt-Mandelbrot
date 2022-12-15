@@ -38,13 +38,13 @@ int Tile::getPrior() const noexcept {
 }
 
 Tile::updateStatus Tile::update() noexcept {
-    std::unique_ptr<Tile, std::function<void(Tile *)>> Resetter = {this, [](Tile *a) {
+    std::unique_ptr<Tile, std::function<void(Tile*)>> Resetter = {this, [](Tile* a) {
         a->running.store(false);
     }};
 
     int h, w, y;
     Complex diaganal, cor;
-    QImage *img;
+    QImage* img;
     {
         std::unique_lock lck(mut);
         if (targetLayer == layers.size()) {
@@ -66,7 +66,7 @@ Tile::updateStatus Tile::update() noexcept {
     for (; y < h; y++) {
 //        to the data of QImage no one can access until it is rendered or the tile is revoked
 //        so we don't have to protect it with a mutex
-        std::uint8_t *data = img->bits() + y * img->bytesPerLine();
+        std::uint8_t* data = img->bits() + y * img->bytesPerLine();
         auto yy = (double) y / h * diaganal.imag() + cor.imag();
         for (int x = 0; x < w; x++) {
             auto xx = (double) x / w * diaganal.real() + cor.real();
@@ -74,7 +74,19 @@ Tile::updateStatus Tile::update() noexcept {
             data[x * 3 + 0] = 0;
             data[x * 3 + 1] = val;
             data[x * 3 + 2] = val;
+            //uncomment to drow grid
+//            if (y == 0 || y == h - 1) {
+//                data[x * 3 + 0] = 255;
+//                data[x * 3 + 1] = 0;
+//                data[x * 3 + 2] = 0;
+//            }
         }
+//            data[(w - 1) * 3 + 0] = 255;
+//            data[(w - 1) * 3 + 1] = 0;
+//            data[(w - 1) * 3 + 2] = 0;
+//            data[0] = 255;
+//            data[1] = 0;
+//            data[2] = 0;
         {
             std::lock_guard lck(mut);
             if (revoked) {

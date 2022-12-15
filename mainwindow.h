@@ -31,33 +31,33 @@ class MainWindow : public QMainWindow {
 Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget* parent = nullptr);
 
     ~MainWindow() override;
 
-    void paintEvent(QPaintEvent *) override;
+    void paintEvent(QPaintEvent*) override;
 
-    void mouseReleaseEvent(QMouseEvent *) override;
+    void mouseReleaseEvent(QMouseEvent*) override;
 
-    void mousePressEvent(QMouseEvent *) override;
+    void mousePressEvent(QMouseEvent*) override;
 
-    void mouseMoveEvent(QMouseEvent *) override;
+    void mouseMoveEvent(QMouseEvent*) override;
 
-    void wheelEvent(QWheelEvent *) override;
+    void wheelEvent(QWheelEvent*) override;
 
-    void resizeEvent(QResizeEvent *ev) override;
+    void resizeEvent(QResizeEvent* ev) override;
 
-    void draw_Preview(QPainter &);
+    void draw_Preview(QPainter&);
 
     using Complex = Tile::Complex;
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow* ui;
 
     struct {
-        Tile *tile = nullptr;
+        Tile* tile = nullptr;
         int x = 0, y = 0, min_size = 0;
-        double s = 0.;
+        long double s = 0.;
     } some_tile;
 
     int min_layer_size = 64;
@@ -67,6 +67,9 @@ private:
     Timer timer;
 
     void change_min_layer_size(char a) {
+        if (a == 0) {
+            exit(-31);
+        }
         min_layer_size = a < 0 ? min_layer_size / (-a) : min_layer_size * a;
     }
 
@@ -81,7 +84,7 @@ private:
         //changes the value only in the destructor therefore we do not protect
         bool running = true;
 
-        MainWindow *m_W = nullptr;
+        MainWindow* m_W = nullptr;
 
         void threadFunc() const;
     };
@@ -90,7 +93,7 @@ private:
 
     struct {
         Complex zero = {0, 0};
-        double scale = 1. / 256;
+        long double scale = 1. / 256;
         int xc = 0, yc = 0;
     } coordSystem;
 

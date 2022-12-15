@@ -2,14 +2,13 @@
 #include "ui_mainwindow.h"
 //#include <iostream>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(QWidget* parent)
         : QMainWindow(parent), ui(new Ui::MainWindow),
           threads(std::thread::hardware_concurrency() == 1 ? 1
                                                            : std::thread::hardware_concurrency() - 1) {
-//          threads(2) {
     ui->setupUi(this);
 
-    for (auto &a : threads) {
+    for (auto& a: threads) {
         a.second.m_W = this;
         a.first = std::thread(&threadData::threadFunc, &a.second);
     }
@@ -24,15 +23,15 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 
-void MainWindow::draw_Preview(QPainter &painter) {
+void MainWindow::draw_Preview(QPainter& painter) {
     //quickly draw in the quality that allows performance
     int width = this->width();
     int height = this->height();
 
-    auto *tile = some_tile.tile;
-    auto &tx = some_tile.x;
-    auto &ty = some_tile.y;
-    auto &ts = some_tile.s;
+    auto* tile = some_tile.tile;
+    auto& tx = some_tile.x;
+    auto& ty = some_tile.y;
+    auto& ts = some_tile.s;
     if (tx != coordSystem.xc || ty != coordSystem.yc || ts != coordSystem.scale) {
         if (min_layer_size != some_tile.min_size) {
             some_tile.tile->delete_layer();
@@ -45,10 +44,11 @@ void MainWindow::draw_Preview(QPainter &painter) {
         //change the quality if we draw for too long (or too fast)
         timer.reset();
         tile->update();
-        if (timer.elapsed() > 0.02) {
+        double elapsed = timer.elapsed();
+        if (elapsed > 0.02) {
             if (min_layer_size / 2 >= 4)
                 change_min_layer_size(-2);
-        } else if (timer.elapsed() < 0.007) {
+        } else if (elapsed < 0.007) {
             if (min_layer_size * 2 <= std::min(width, height))
                 change_min_layer_size(2);
         }
@@ -57,7 +57,7 @@ void MainWindow::draw_Preview(QPainter &painter) {
         ty = coordSystem.yc;
         ts = coordSystem.scale;
     }
-    auto *img = tile->rendered.load();
+    auto* img = tile->rendered.load();
 
     auto ratiow = (double) width / img->width();
     auto ratioh = (double) height / img->height();
@@ -71,8 +71,7 @@ void MainWindow::draw_Preview(QPainter &painter) {
     painter.drawImage(0, 0, *img);
 }
 
-void MainWindow::paintEvent(QPaintEvent *ev) {
-    QMainWindow::paintEvent(ev);
+void MainWindow::paintEvent(QPaintEvent* ev) {
     bool needsRerender = false;
 
     int width = this->width();
@@ -101,13 +100,16 @@ void MainWindow::paintEvent(QPaintEvent *ev) {
             int ry = y - coordSystem.yc;
             ry = ry >= 0 ? ry / size : (ry - size + 1) / size;
             ry *= size;
-            auto *tile = tile_Storage.GetTile(rx, ry, Complex(rx, ry) * coordSystem.scale + coordSystem.zero,
-                                              Complex(size, size) * coordSystem.scale, size);
+            auto* tile = tile_Storage.GetTile(rx,
+                                              ry,
+                                              Complex(rx, ry) * coordSystem.scale + coordSystem.zero,
+                                              Complex(size, size) * coordSystem.scale,
+                                              size);
             int cur_size = tile->get_cur_size();
 
             if (cur_size * 1000 / size >= min_size * 1000 / wh) {
                 // to the rendered field in layers, no one else can change it without calling the set (which is only called by the mainwindow)
-                QImage *tile_rendered = tile->rendered.load();
+                QImage* tile_rendered = tile->rendered.load();
                 if (tile_rendered != nullptr) {
                     auto ratiow = (double) size / tile_rendered->width();
                     auto ratioh = (double) size / tile_rendered->height();
@@ -160,12 +162,12 @@ void MainWindow::paintEvent(QPaintEvent *ev) {
 
 void MainWindow::threadData::threadFunc() const {
     Tile::updateStatus status = Tile::updateStatus::COMPLETED;
-    Tile *tile = nullptr;
+    Tile* tile = nullptr;
     while (running) {
         {
             auto lck = std::unique_lock(m_W->mut);
             if (tile != nullptr && (status == Tile::updateStatus::UPDATED ||
-                status == Tile::updateStatus::PAUSED)) {
+                                    status == Tile::updateStatus::PAUSED)) {
                 tile->running.store(true);
                 m_W->tasks.push({tile->getPrior(), tile});
             } else {
@@ -186,19 +188,13 @@ void MainWindow::threadData::threadFunc() const {
 }
 
 
-void MainWindow::wheelEvent(QWheelEvent *ev) {
-    QMainWindow::wheelEvent(ev);
-    //    if (mouse_Storage.pressed) {
-    //        ev->ignore();
-    //        return;
-    //    }
-    double prevScale = coordSystem.scale;
+void MainWindow::wheelEvent(QWheelEvent* ev) {
+    long double prevScale = coordSystem.scale;
     double sc;
-    if(!ev->angleDelta().isNull()) {
+    if (!ev->angleDelta().isNull()) {
         sc = ev->angleDelta().ry() == 0 ? ev->angleDelta().rx() : ev->angleDelta().ry();
-
     } else if (!ev->pixelDelta().isNull()) {
-        sc = ev->pixelDelta().ry() == 0 ?  ev->pixelDelta().rx() : ev->pixelDelta().ry();
+        sc = ev->pixelDelta().ry() == 0 ? ev->pixelDelta().rx() : ev->pixelDelta().ry();
     } else {
         ev->ignore();
         return;
@@ -207,11 +203,11 @@ void MainWindow::wheelEvent(QWheelEvent *ev) {
     coordSystem.scale *= std::pow(1.09, -sc / 101);
 
     int a = 1;
-    if(ev->angleDelta().ry() > 0){
-        a= -a;
+    if (ev->angleDelta().ry() > 0) {
+        a = -a;
     }
-    coordSystem.xc += a*((int) ev->position().x() - width()/2.)*0.2;
-    coordSystem.yc += a*((int) ev->position().y() - height()/2.)*0.2;
+    coordSystem.xc += a * (ev->position().x() - width() / 2.) * 0.2;
+    coordSystem.yc += a * (ev->position().y() - height() / 2.) * 0.2;
 
     coordSystem.zero -= prevScale * Complex(coordSystem.xc, coordSystem.yc);
     coordSystem.xc = coordSystem.yc = 0;
@@ -220,16 +216,25 @@ void MainWindow::wheelEvent(QWheelEvent *ev) {
     ev->accept();
 }
 
-void MainWindow::mouseReleaseEvent(QMouseEvent *ev) {
+void MainWindow::mouseReleaseEvent(QMouseEvent* ev) {
     if (ev->button() == Qt::LeftButton) {
         mouse_Storage.pressed = false;
+        int h_width = width() / 2;
+        int h_height = height() / 2;
+        tile_Storage.revoke_useless(
+                coordSystem.xc - h_width,
+                coordSystem.yc - h_height,
+                coordSystem.xc + h_width,
+                coordSystem.yc + h_height,
+                std::max(width(), height())
+        );
         ev->accept();
     } else {
         ev->ignore();
     }
 }
 
-void MainWindow::mousePressEvent(QMouseEvent *ev) {
+void MainWindow::mousePressEvent(QMouseEvent* ev) {
     if (ev->button() == Qt::LeftButton) {
         mouse_Storage.pressed = true;
         mouse_Storage.lastX = ev->screenPos().x();
@@ -240,34 +245,32 @@ void MainWindow::mousePressEvent(QMouseEvent *ev) {
     }
 }
 
-void MainWindow::mouseMoveEvent(QMouseEvent *ev) {
-    QMainWindow::mouseMoveEvent(ev);
+void MainWindow::mouseMoveEvent(QMouseEvent* ev) {
     if (!mouse_Storage.pressed) {
         ev->ignore();
         return;
     }
 
 
-    coordSystem.xc += ((int) ev->screenPos().x() - mouse_Storage.lastX);
-    coordSystem.yc += ((int) ev->screenPos().y() - mouse_Storage.lastY);
+    coordSystem.xc += (ev->screenPos().x() - mouse_Storage.lastX);
+    coordSystem.yc += (ev->screenPos().y() - mouse_Storage.lastY);
     mouse_Storage.lastX = ev->screenPos().x();
     mouse_Storage.lastY = ev->screenPos().y();
     update();
     ev->accept();
 }
 
-void MainWindow::resizeEvent(QResizeEvent *ev) {
-    QMainWindow::resizeEvent(ev);
+void MainWindow::resizeEvent(QResizeEvent* ev) {
     update();
     ev->accept();
 }
 
 MainWindow::~MainWindow() {
     delete some_tile.tile;
-    for (auto &a : threads)
+    for (auto& a: threads)
         a.second.running = false;
     cv.notify_all();
-    for (auto &a : threads)
+    for (auto& a: threads)
         a.first.join();
     delete ui;
 }

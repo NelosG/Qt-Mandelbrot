@@ -10,17 +10,17 @@
 
 class Tile {
 public:
-    std::atomic<QImage *> rendered;
+    std::atomic<QImage*> rendered;
     std::atomic<bool> running = false;
 
-    enum class updateStatus{
+    enum class updateStatus {
         UPDATED,
         STOPPED,
         PAUSED,
         COMPLETED
     };
     unsigned int targetLayer = 0;
-    using Complex = std::complex<double>;
+    using Complex = std::complex<long double>;
 
 private:
     int currentLayer = -1;
@@ -48,13 +48,13 @@ public:
 
     Tile() = default;
 
-    Tile(Tile const &) = delete;
+    Tile(Tile const&) = delete;
 
-    Tile(Tile &&) = delete;
+    Tile(Tile&&) = delete;
 
-    void operator=(Tile const &) = delete;
+    void operator=(Tile const&) = delete;
 
-    void operator=(Tile &&) = delete;
+    void operator=(Tile&&) = delete;
 
 
     void revoke(updateStatus st = updateStatus::STOPPED);
@@ -97,24 +97,29 @@ public:
 class priority_Tile {
 public:
     int prior;
-    Tile *tile;
+    Tile* tile;
 
-    auto operator<(priority_Tile const &r) const {
+    auto operator<(priority_Tile const& r) const {
         return prior < r.prior;
     }
-    auto operator>(priority_Tile const &r) const {
+
+    auto operator>(priority_Tile const& r) const {
         return prior > r.prior;
     }
-    auto operator==(priority_Tile const &r) const {
+
+    auto operator==(priority_Tile const& r) const {
         return prior == r.prior;
     }
-    auto operator<=(priority_Tile const &r) const {
+
+    auto operator<=(priority_Tile const& r) const {
         return prior <= r.prior;
     }
-    auto operator>=(priority_Tile const &r) const {
+
+    auto operator>=(priority_Tile const& r) const {
         return prior >= r.prior;
     }
-    auto operator!=(priority_Tile const &r) const {
+
+    auto operator!=(priority_Tile const& r) const {
         return prior != r.prior;
     }
 };

@@ -10,9 +10,9 @@
 #include "tile.h"
 
 struct Tile_Storage {
-    std::vector<Tile *> pool;
+    std::vector<Tile*> pool;
     using Coord = std::pair<int, int>;
-    std::map<Coord, Tile *> cache;
+    std::map<Coord, Tile*> cache;
     using Complex = Tile::Complex;
 
     Tile_Storage();
@@ -21,9 +21,11 @@ struct Tile_Storage {
 
     void revoke_Tiles() noexcept;
 
-    Tile *GetTile(int x, int y, Complex corner, Complex diag, int size) noexcept;
+    void revoke_useless(int minX, int minY, int maxX, int maxY, int space) noexcept;
+
+    Tile* GetTile(int x, int y, Complex corner, Complex diag, int size) noexcept;
 
 private:
-    Tile *Get(int) noexcept;
+    Tile* Get(int) noexcept;
 };
 
