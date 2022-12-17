@@ -31,10 +31,12 @@ set(SRC main.cpp
         tilestorage.cpp
         timer.h)
 
-if (WIN32)
-    SET(GUI_TYPE WIN32)
-elseif (APPLE)
-    SET(GUI_TYPE MACOSX_BUNDLE)
+if (CMAKE_BUILD_TYPE MATCHES Release)
+    if (WIN32)
+        SET(GUI_TYPE WIN32)
+    elseif (APPLE)
+        SET(GUI_TYPE MACOSX_BUNDLE)
+    endif ()
 endif ()
 
 add_executable(${PROJECT_NAME} ${GUI_TYPE} ${SRC})

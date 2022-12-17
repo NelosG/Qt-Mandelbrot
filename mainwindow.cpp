@@ -13,11 +13,11 @@ MainWindow::MainWindow(QWidget* parent)
         a.first = std::thread(&threadData::threadFunc, &a.second);
     }
     double tmp = threads.size() == 1 ? std::max(width(), height()) : sqrt(width() * height() / threads.size()) + 1;
-
     size = 1;
     while (size < tmp) {
         size *= 2;
     }
+    size /= 2;
     some_tile.tile = new Tile();
     this->update();
 }
@@ -251,7 +251,6 @@ void MainWindow::mouseMoveEvent(QMouseEvent* ev) {
         return;
     }
 
-
     coordSystem.xc += (ev->screenPos().x() - mouse_Storage.lastX);
     coordSystem.yc += (ev->screenPos().y() - mouse_Storage.lastY);
     mouse_Storage.lastX = ev->screenPos().x();
@@ -261,6 +260,12 @@ void MainWindow::mouseMoveEvent(QMouseEvent* ev) {
 }
 
 void MainWindow::resizeEvent(QResizeEvent* ev) {
+    double tmp = threads.size() == 1 ? std::max(width(), height()) : sqrt(width() * height() / threads.size()) + 1;
+    size = 1;
+    while (size < tmp) {
+        size *= 2;
+    }
+    size /= 2;
     update();
     ev->accept();
 }

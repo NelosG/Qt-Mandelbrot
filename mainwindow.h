@@ -71,6 +71,9 @@ private:
             exit(-31);
         }
         min_layer_size = a < 0 ? min_layer_size / (-a) : min_layer_size * a;
+        if(min_layer_size > size) {
+            min_layer_size = size;
+        }
     }
 
     Tile_Storage tile_Storage;
