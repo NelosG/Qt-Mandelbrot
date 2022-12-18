@@ -59,8 +59,8 @@ void MainWindow::draw_Preview(QPainter& painter) {
     }
     auto* img = tile->rendered.load();
 
-    auto ratiow = (double) width / img->width();
-    auto ratioh = (double) height / img->height();
+    auto ratiow = (double)width / img->width();
+    auto ratioh = (double)height / img->height();
 
     painter.setTransform(
             QTransform(
@@ -90,13 +90,13 @@ void MainWindow::paintEvent(QPaintEvent* ev) {
 
     priority_Tile prevTile = {1000, nullptr};
 
-    for (int x = -size; x <= width; x += size) {
+    for (int x = -size ; x <= width ; x += size) {
         int rx = x - coordSystem.xc;
         rx = rx >= 0 ? rx / size : (rx - size + 1) / size;
         rx *= size;
 
 
-        for (int y = -size; y <= height; y += size) {
+        for (int y = -size ; y <= height ; y += size) {
             int ry = y - coordSystem.yc;
             ry = ry >= 0 ? ry / size : (ry - size + 1) / size;
             ry *= size;
@@ -111,8 +111,8 @@ void MainWindow::paintEvent(QPaintEvent* ev) {
                 // to the rendered field in layers, no one else can change it without calling the set (which is only called by the mainwindow)
                 QImage* tile_rendered = tile->rendered.load();
                 if (tile_rendered != nullptr) {
-                    auto ratiow = (double) size / tile_rendered->width();
-                    auto ratioh = (double) size / tile_rendered->height();
+                    auto ratiow = (double)size / tile_rendered->width();
+                    auto ratioh = (double)size / tile_rendered->height();
                     painter.setTransform(
                             QTransform(
                                     ratiow, 0,
@@ -218,15 +218,34 @@ void MainWindow::wheelEvent(QWheelEvent* ev) {
 
 void MainWindow::mouseReleaseEvent(QMouseEvent* ev) {
     if (ev->button() == Qt::LeftButton) {
+        int width = this->width();
+        int height = this->height();
+
+        int rx_min = -size - coordSystem.xc;
+        rx_min = rx_min >= 0 ? rx_min / size : (rx_min - size + 1) / size;
+        rx_min *= size;
+
+        int ry_min = -size - coordSystem.yc;
+        ry_min = ry_min >= 0 ? ry_min / size : (ry_min - size + 1) / size;
+        ry_min *= size;
+
+        int rx_max = width - coordSystem.xc;
+        rx_max = rx_max >= 0 ? rx_max / size : (rx_max - size + 1) / size;
+        rx_max *= size;
+
+        int ry_max = height - coordSystem.yc;
+        ry_max = ry_max >= 0 ? ry_max / size : (ry_max - size + 1) / size;
+        ry_max *= size;
+
+
+
         mouse_Storage.pressed = false;
-        int h_width = width() / 2;
-        int h_height = height() / 2;
         tile_Storage.revoke_useless(
-                coordSystem.xc - h_width,
-                coordSystem.yc - h_height,
-                coordSystem.xc + h_width,
-                coordSystem.yc + h_height,
-                std::max(width(), height())
+                rx_min,
+                ry_min,
+                rx_max,
+                ry_max,
+                std::max(width, height)
         );
         ev->accept();
     } else {
