@@ -1,5 +1,5 @@
 #include "tile.h"
-#include  <memory>
+#include "tile_update.h"
 
 Tile::Tile(int s) : rendered(nullptr) {
     for (int i = 2; i <= s; i *= 2) {
@@ -34,13 +34,15 @@ bool Tile::isLast() const noexcept {
 
 int Tile::getPrior() const noexcept {
     std::unique_lock lck(mut);
-    return (int) layers.size() - currentLayer;
+    return (int)layers.size() - currentLayer;
 }
 
 Tile::updateStatus Tile::update() noexcept {
-    std::unique_ptr<Tile, std::function<void(Tile*)>> Resetter = {this, [](Tile* a) {
-        a->running.store(false);
-    }};
+    std::unique_ptr<Tile, std::function<void(Tile*)>> Resetter = {
+        this, [](Tile* a) {
+            a->running.store(false);
+        }
+    };
 
     int h, w, y;
     Complex diaganal, cor;
@@ -62,42 +64,25 @@ Tile::updateStatus Tile::update() noexcept {
         cor = corner;
         y = curY;
     }
-    unsigned char val;
-    for (; y < h; y++) {
-//        to the data of QImage no one can access until it is rendered or the tile is revoked
-//        so we don't have to protect it with a mutex
-        std::uint8_t* data = img->bits() + y * img->bytesPerLine();
-        auto yy = (double) y / h * diaganal.imag() + cor.imag();
-        for (int x = 0; x < w; x++) {
-            auto xx = (double) x / w * diaganal.real() + cor.real();
-            val = mand({xx, yy});
-            data[x * 3 + 0] = 0;
-            data[x * 3 + 1] = val;
-            data[x * 3 + 2] = val;
-            //uncomment to drow grid
-//            if (y == 0 || y == h - 1) {
-//                data[x * 3 + 0] = 255;
-//                data[x * 3 + 1] = 0;
-//                data[x * 3 + 2] = 0;
-//            }
-        }
-//            data[(w - 1) * 3 + 0] = 255;
-//            data[(w - 1) * 3 + 1] = 0;
-//            data[(w - 1) * 3 + 2] = 0;
-//            data[0] = 255;
-//            data[1] = 0;
-//            data[2] = 0;
-        {
-            std::lock_guard lck(mut);
-            if (revoked) {
-                revoked = false;
-                curY = y + 1;
-                return status;
-            }
-        }
-    }
-    {
 
+    // for (; y < h; y++) {
+    do_update(img->bits(),
+              h, w, y,
+              img->bytesPerLine(),
+              diaganal,
+              cor);
+    // {
+    //     std::lock_guard lck(mut);
+    //     if (revoked) {
+    //         revoked = false;
+    //         curY = y + 1;
+    //         return status;
+    //     }
+    // }
+    // }
+
+
+    {
         rendered.store(&layers[targetLayer]);
         std::unique_lock lck(mut);
         curY = 0;

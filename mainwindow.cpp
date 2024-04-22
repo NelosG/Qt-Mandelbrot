@@ -1,18 +1,28 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-//#include <iostream>
 
 MainWindow::MainWindow(QWidget* parent)
-        : QMainWindow(parent), ui(new Ui::MainWindow),
-          threads(std::thread::hardware_concurrency() == 1 ? 1
-                                                           : std::thread::hardware_concurrency() - 1) {
+    : QMainWindow(parent), ui(new Ui::MainWindow) {
+
+    #ifdef CUDA
+    int thread_count = 1;
+    #else
+    int thread_count = std::thread::hardware_concurrency() == 1
+                       ? 1
+                       : std::thread::hardware_concurrency() - 1;
+    #endif
+
+    threads.resize(thread_count);
+
     ui->setupUi(this);
 
-    for (auto& a: threads) {
+    for (auto& a : threads) {
         a.second.m_W = this;
         a.first = std::thread(&threadData::threadFunc, &a.second);
     }
-    double tmp = threads.size() == 1 ? std::max(width(), height()) : sqrt(width() * height() / threads.size()) + 1;
+    double tmp = threads.size() == 1
+                 ? std::max(width(), height())
+                 : sqrt(width() * height() / threads.size()) + 1;
     size = 1;
     while (size < tmp) {
         size *= 2;
@@ -46,8 +56,9 @@ void MainWindow::draw_Preview(QPainter& painter) {
         tile->update();
         double elapsed = timer.elapsed();
         if (elapsed > 0.02) {
-            if (min_layer_size / 2 >= 4)
+            if (min_layer_size / 2 >= 4) {
                 change_min_layer_size(-2);
+            }
         } else if (elapsed < 0.007) {
             if (min_layer_size * 2 <= std::min(width, height))
                 change_min_layer_size(2);
@@ -63,11 +74,11 @@ void MainWindow::draw_Preview(QPainter& painter) {
     auto ratioh = (double)height / img->height();
 
     painter.setTransform(
-            QTransform(
-                    ratiow, 0,
-                    0, ratioh,
-                    0,
-                    0));
+        QTransform(
+            ratiow, 0,
+            0, ratioh,
+            0,
+            0));
     painter.drawImage(0, 0, *img);
 }
 
@@ -90,13 +101,13 @@ void MainWindow::paintEvent(QPaintEvent* ev) {
 
     priority_Tile prevTile = {1000, nullptr};
 
-    for (int x = -size ; x <= width ; x += size) {
+    for (int x = -size; x <= width; x += size) {
         int rx = x - coordSystem.xc;
         rx = rx >= 0 ? rx / size : (rx - size + 1) / size;
         rx *= size;
 
 
-        for (int y = -size ; y <= height ; y += size) {
+        for (int y = -size; y <= height; y += size) {
             int ry = y - coordSystem.yc;
             ry = ry >= 0 ? ry / size : (ry - size + 1) / size;
             ry *= size;
@@ -114,14 +125,13 @@ void MainWindow::paintEvent(QPaintEvent* ev) {
                     auto ratiow = (double)size / tile_rendered->width();
                     auto ratioh = (double)size / tile_rendered->height();
                     painter.setTransform(
-                            QTransform(
-                                    ratiow, 0,
-                                    0, ratioh,
-                                    xoffset + x,
-                                    yoffset + y));
+                        QTransform(
+                            ratiow, 0,
+                            0, ratioh,
+                            xoffset + x,
+                            yoffset + y));
                     painter.drawImage(0, 0, *tile_rendered);
                 }
-
             } else {
                 //skip generating tiles of worse quality than the one already rendered
                 //otherwise, with good performance, you will still have to draw low-quality images
@@ -167,7 +177,7 @@ void MainWindow::threadData::threadFunc() const {
         {
             auto lck = std::unique_lock(m_W->mut);
             if (tile != nullptr && (status == Tile::updateStatus::UPDATED ||
-                                    status == Tile::updateStatus::PAUSED)) {
+                status == Tile::updateStatus::PAUSED)) {
                 tile->running.store(true);
                 m_W->tasks.push({tile->getPrior(), tile});
             } else {
@@ -238,14 +248,13 @@ void MainWindow::mouseReleaseEvent(QMouseEvent* ev) {
         ry_max *= size;
 
 
-
         mouse_Storage.pressed = false;
         tile_Storage.revoke_useless(
-                rx_min,
-                ry_min,
-                rx_max,
-                ry_max,
-                std::max(width, height)
+            rx_min,
+            ry_min,
+            rx_max,
+            ry_max,
+            std::max(width, height)
         );
         ev->accept();
     } else {
@@ -291,10 +300,10 @@ void MainWindow::resizeEvent(QResizeEvent* ev) {
 
 MainWindow::~MainWindow() {
     delete some_tile.tile;
-    for (auto& a: threads)
+    for (auto& a : threads)
         a.second.running = false;
     cv.notify_all();
-    for (auto& a: threads)
+    for (auto& a : threads)
         a.first.join();
     delete ui;
 }

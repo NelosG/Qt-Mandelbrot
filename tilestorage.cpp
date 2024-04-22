@@ -4,7 +4,7 @@ Tile_Storage::Tile_Storage() = default;
 
 
 void Tile_Storage::revoke_Tiles() noexcept {
-    for (auto& a: cache) {
+    for (auto& a : cache) {
         a.second->revoke();
         pool.push_back(a.second);
     }
@@ -12,7 +12,7 @@ void Tile_Storage::revoke_Tiles() noexcept {
 }
 
 void Tile_Storage::revoke_useless(int minX, int minY, int maxX, int maxY, int space) noexcept {
-    for (auto& a: cache) {
+    for (auto& a : cache) {
         if (a.first.first < minX - space || a.first.first > maxX + space ||
             a.first.second < minY - space || a.first.second > maxY + space) {
             a.second->revoke();
@@ -45,6 +45,6 @@ Tile* Tile_Storage::Get(int size) noexcept {
 
 Tile_Storage::~Tile_Storage() {
     revoke_Tiles();
-    for (auto const& a: pool)
+    for (auto const& a : pool)
         delete a;
 }

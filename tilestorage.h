@@ -25,7 +25,6 @@ struct Tile_Storage {
 
     Tile* GetTile(int x, int y, Complex corner, Complex diag, int size) noexcept;
 
-private:
-    Tile* Get(int) noexcept;
+    private:
+        Tile* Get(int) noexcept;
 };
-
